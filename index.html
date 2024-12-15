@@ -1,68 +1,101 @@
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kalkulator CPNS</title>
+    <title>CPNS Kalkulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 1s ease-in-out;
+        }
+    </style>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('scoreForm');
-            const resultsContainer = document.getElementById('resultsContainer');
+            const form = document.querySelector('form');
+            const resultsContainer = document.getElementById('results');
             const exportButton = document.getElementById('exportButton');
+            const skb400Input = document.getElementById('skb400');
+            const skb500Input = document.getElementById('skb500');
+            const toggleButton = document.getElementById('toggleButton');
+
             let scores = JSON.parse(localStorage.getItem('scores')) || [];
+            let isSKB400Active = false;
 
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const participantName = document.getElementById('participantName').value;
-                const skdScore = parseFloat(document.getElementById('skdScore').value);
-                const skbScore = parseFloat(document.getElementById('skbScore').value);
 
-                if (isNaN(skdScore) || isNaN(skbScore)) {
-                    alert('Masukkan nilai yang valid untuk SKD dan SKB.');
+                const name = e.target[1].value;
+                const skdScore = parseFloat(e.target[2].value);
+                const skb400Score = parseFloat(e.target[3].value);
+                const skb500Score = parseFloat(e.target[4].value);
+
+                if (isNaN(skdScore) || (isNaN(skb400Score) && isNaN(skb500Score))) {
+                    alert('Please enter valid scores.');
                     return;
                 }
 
                 const skdResult = (skdScore / 550) * 40;
-                const skbResult = (skbScore / 500) * 60;
+                let skbResult = 0;
+
+                if (isSKB400Active && !isNaN(skb400Score)) {
+                    skbResult = (skb400Score / 400) * 60;
+                } else if (!isSKB400Active && !isNaN(skb500Score)) {
+                    skbResult = (skb500Score / 500) * 60;
+                }
+
                 const totalScore = skdResult + skbResult;
 
-                scores.push({ participantName, skdScore, skbScore, totalScore });
+                scores.push({ name, skdScore, skbScore: isSKB400Active ? skb400Score : skb500Score, totalScore });
                 scores.sort((a, b) => b.totalScore - a.totalScore);
 
                 localStorage.setItem('scores', JSON.stringify(scores));
-                displayResults();
+                renderResults();
+
+                // Clear input fields
                 form.reset();
+                skb400Input.disabled = !isSKB400Active;
+                skb500Input.disabled = isSKB400Active;
             });
 
-            function displayResults() {
+            function renderResults() {
                 resultsContainer.innerHTML = '';
+
                 if (scores.length === 0) {
                     resultsContainer.innerHTML = '<p class="text-gray-400 mb-4">Tidak ada skor yang tersedia. Mulailah dengan menambahkan skor baru.</p>';
                 } else {
                     scores.forEach((score, index) => {
                         const resultItem = document.createElement('div');
-                        resultItem.className = 'flex justify-between items-center bg-gray-700 p-2 mb-2 rounded';
-                        resultItem.innerHTML = `
-                            <div>
-                                <p class="text-white">${index + 1}. ${score.participantName}</p>
-                                <p class="text-gray-400">SKD: ${score.skdScore}, SKB: ${score.skbScore}, Total: ${score.totalScore.toFixed(2)}</p>
-                            </div>
-                            <button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteScore(${index})">Hapus</button>
-                        `;
+                        resultItem.className = 'flex justify-between items-center mb-2 p-2 bg-gray-700 rounded';
+
+                        const resultText = document.createElement('div');
+                        resultText.className = 'flex flex-col';
+                        resultText.innerHTML = `<span class="font-bold">${index + 1}. ${score.name}</span>
+                                                <span>SKD: ${score.skdScore} | SKB: ${score.skbScore} | Total: ${score.totalScore.toFixed(2)}</span>`;
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.className = 'text-red-500 hover:text-red-700';
+                        deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                        deleteButton.addEventListener('click', () => {
+                            scores.splice(index, 1);
+                            localStorage.setItem('scores', JSON.stringify(scores));
+                            renderResults();
+                        });
+
+                        resultItem.appendChild(resultText);
+                        resultItem.appendChild(deleteButton);
+
                         resultsContainer.appendChild(resultItem);
                     });
                 }
             }
 
-            window.deleteScore = (index) => {
-                scores.splice(index, 1);
-                localStorage.setItem('scores', JSON.stringify(scores));
-                displayResults();
-            };
-
             exportButton.addEventListener('click', () => {
-                const csvContent = "data:text/csv;charset=utf-8," + scores.map(e => `${e.participantName},${e.skdScore},${e.skbScore},${e.totalScore.toFixed(2)}`).join("\n");
+                const csvContent = "data:text/csv;charset=utf-8," + scores.map(e => `${e.name},${e.skdScore},${e.skbScore},${e.totalScore.toFixed(2)}`).join("\n");
                 const encodedUri = encodeURI(csvContent);
                 const link = document.createElement("a");
                 link.setAttribute("href", encodedUri);
@@ -72,55 +105,86 @@
                 document.body.removeChild(link);
             });
 
-            displayResults();
+            toggleButton.addEventListener('click', () => {
+                isSKB400Active = !isSKB400Active;
+                skb400Input.disabled = !isSKB400Active;
+                skb500Input.disabled = isSKB400Active;
+                skb400Input.value = '';
+                skb500Input.value = '';
+                toggleButton.textContent = isSKB400Active ? 'Aktifkan SKB 500' : 'Aktifkan SKB 400';
+            });
+
+            // Initialize with SKB 400 disabled
+            skb400Input.disabled = true;
+
+            // Render results on page load
+            renderResults();
+
+            // Add fade-in animation to the main container
+            document.querySelector('.main-container').classList.add('fade-in');
         });
     </script>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center">
-    <div class="w-full max-w-4xl p-4">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-purple-400">CPNS <span class="text-yellow-400">Kalkulator</span></h1>
+<body class="bg-gray-900 text-white">
+    <div class="min-h-screen flex flex-col items-center justify-center p-4 main-container">
+        <div class="flex justify-between items-center w-full max-w-4xl mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-purple-500">CPNS <span class="text-yellow-400">Kalkulator</span></h1>
+                <p class="text-gray-400">Hitung dan lacak skor SKD & SKB</p>
+            </div>
+            <a href="https://www.instagram.com/_damarwulan/" target="_blank" class="text-gray-400 hover:text-white">
+                <i class="fab fa-instagram text-2xl"></i>
+            </a>
         </div>
-        <p class="text-gray-400 mb-6">Hitung dan lacak skor SKD & SKB</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-gray-800 p-6 rounded-lg">
+        <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 w-full max-w-4xl">
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full">
                 <h2 class="text-xl font-bold mb-4 flex items-center">
-                    <i class="fas fa-calculator text-purple-400 mr-2"></i> Kalkulator Skor
+                    <i class="fas fa-calculator text-purple-500 mr-2"></i> Kalkulator Skor
                 </h2>
-                <form id="scoreForm">
+                <form>
+                    <button id="toggleButton" type="button" class="w-full mb-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Aktifkan SKB 400</button>
                     <div class="mb-4">
                         <label class="block text-gray-400 mb-2 flex items-center">
                             <i class="fas fa-user text-gray-400 mr-2"></i> Nama Peserta
                         </label>
-                        <input type="text" id="participantName" placeholder="Masukkan nama peserta" class="w-full bg-gray-700 text-white p-2 rounded" required>
+                        <input type="text" placeholder="Masukkan nama peserta" class="w-full p-2 bg-gray-700 text-gray-300 rounded">
                     </div>
                     <div class="mb-4">
                         <label class="block text-gray-400 mb-2 flex items-center">
                             <i class="fas fa-calculator text-gray-400 mr-2"></i> Skor SKD (maks 550)
                         </label>
-                        <input type="number" id="skdScore" placeholder="0-550" class="w-full bg-gray-700 text-white p-2 rounded" required>
+                        <input type="number" placeholder="0-550" class="w-full p-2 bg-gray-700 text-gray-300 rounded">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-400 mb-2 flex items-center">
+                            <i class="fas fa-calculator text-gray-400 mr-2"></i> Skor SKB (maks 400)
+                        </label>
+                        <input id="skb400" type="number" placeholder="0-400" class="w-full p-2 bg-gray-700 text-gray-300 rounded">
                     </div>
                     <div class="mb-4">
                         <label class="block text-gray-400 mb-2 flex items-center">
                             <i class="fas fa-calculator text-gray-400 mr-2"></i> Skor SKB (maks 500)
                         </label>
-                        <input type="number" id="skbScore" placeholder="0-500" class="w-full bg-gray-700 text-white p-2 rounded" required>
+                        <input id="skb500" type="number" placeholder="0-500" class="w-full p-2 bg-gray-700 text-gray-300 rounded">
                     </div>
-                    <button type="submit" class="w-full bg-purple-500 text-white py-2 rounded">Hitung & Simpan</button>
+                    <button type="submit" class="w-full p-2 bg-purple-500 text-white rounded hover:bg-purple-600">Hitung & Simpan</button>
                 </form>
             </div>
-            <div class="bg-gray-800 p-6 rounded-lg">
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full">
                 <h2 class="text-xl font-bold mb-4 flex items-center">
                     <i class="fas fa-users text-yellow-400 mr-2"></i> Hasil
                 </h2>
-                <div id="resultsContainer" class="mb-4">
-                    <p class="text-gray-400">Tidak ada skor yang tersedia. Mulailah dengan menambahkan skor baru.</p>
+                <div id="results" class="mb-4">
+                    <p class="text-gray-400 mb-4">Tidak ada skor yang tersedia. Mulailah dengan menambahkan skor baru.</p>
                 </div>
-                <button id="exportButton" class="bg-green-600 text-white px-4 py-2 rounded flex items-center">
+                <button id="exportButton" class="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600">
                     <i class="fas fa-download mr-2"></i> Ekspor
                 </button>
             </div>
         </div>
+        <footer class="mt-8 text-gray-400">
+            <p>Copyright © 2024 Damar Wulan</p>
+        </footer>
     </div>
 </body>
 </html>
