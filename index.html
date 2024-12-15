@@ -1,0 +1,126 @@
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator CPNS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('scoreForm');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const exportButton = document.getElementById('exportButton');
+            let scores = JSON.parse(localStorage.getItem('scores')) || [];
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const participantName = document.getElementById('participantName').value;
+                const skdScore = parseFloat(document.getElementById('skdScore').value);
+                const skbScore = parseFloat(document.getElementById('skbScore').value);
+
+                if (isNaN(skdScore) || isNaN(skbScore)) {
+                    alert('Masukkan nilai yang valid untuk SKD dan SKB.');
+                    return;
+                }
+
+                const skdResult = (skdScore / 550) * 40;
+                const skbResult = (skbScore / 500) * 60;
+                const totalScore = skdResult + skbResult;
+
+                scores.push({ participantName, skdScore, skbScore, totalScore });
+                scores.sort((a, b) => b.totalScore - a.totalScore);
+
+                localStorage.setItem('scores', JSON.stringify(scores));
+                displayResults();
+                form.reset();
+            });
+
+            function displayResults() {
+                resultsContainer.innerHTML = '';
+                if (scores.length === 0) {
+                    resultsContainer.innerHTML = '<p class="text-gray-400 mb-4">Tidak ada skor yang tersedia. Mulailah dengan menambahkan skor baru.</p>';
+                } else {
+                    scores.forEach((score, index) => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'flex justify-between items-center bg-gray-700 p-2 mb-2 rounded';
+                        resultItem.innerHTML = `
+                            <div>
+                                <p class="text-white">${index + 1}. ${score.participantName}</p>
+                                <p class="text-gray-400">SKD: ${score.skdScore}, SKB: ${score.skbScore}, Total: ${score.totalScore.toFixed(2)}</p>
+                            </div>
+                            <button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteScore(${index})">Hapus</button>
+                        `;
+                        resultsContainer.appendChild(resultItem);
+                    });
+                }
+            }
+
+            window.deleteScore = (index) => {
+                scores.splice(index, 1);
+                localStorage.setItem('scores', JSON.stringify(scores));
+                displayResults();
+            };
+
+            exportButton.addEventListener('click', () => {
+                const csvContent = "data:text/csv;charset=utf-8," + scores.map(e => `${e.participantName},${e.skdScore},${e.skbScore},${e.totalScore.toFixed(2)}`).join("\n");
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "scores.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            displayResults();
+        });
+    </script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center">
+    <div class="w-full max-w-4xl p-4">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-purple-400">CPNS <span class="text-yellow-400">Kalkulator</span></h1>
+        </div>
+        <p class="text-gray-400 mb-6">Hitung dan lacak skor SKD & SKB</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fas fa-calculator text-purple-400 mr-2"></i> Kalkulator Skor
+                </h2>
+                <form id="scoreForm">
+                    <div class="mb-4">
+                        <label class="block text-gray-400 mb-2 flex items-center">
+                            <i class="fas fa-user text-gray-400 mr-2"></i> Nama Peserta
+                        </label>
+                        <input type="text" id="participantName" placeholder="Masukkan nama peserta" class="w-full bg-gray-700 text-white p-2 rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-400 mb-2 flex items-center">
+                            <i class="fas fa-calculator text-gray-400 mr-2"></i> Skor SKD (maks 550)
+                        </label>
+                        <input type="number" id="skdScore" placeholder="0-550" class="w-full bg-gray-700 text-white p-2 rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-400 mb-2 flex items-center">
+                            <i class="fas fa-calculator text-gray-400 mr-2"></i> Skor SKB (maks 500)
+                        </label>
+                        <input type="number" id="skbScore" placeholder="0-500" class="w-full bg-gray-700 text-white p-2 rounded" required>
+                    </div>
+                    <button type="submit" class="w-full bg-purple-500 text-white py-2 rounded">Hitung & Simpan</button>
+                </form>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fas fa-users text-yellow-400 mr-2"></i> Hasil
+                </h2>
+                <div id="resultsContainer" class="mb-4">
+                    <p class="text-gray-400">Tidak ada skor yang tersedia. Mulailah dengan menambahkan skor baru.</p>
+                </div>
+                <button id="exportButton" class="bg-green-600 text-white px-4 py-2 rounded flex items-center">
+                    <i class="fas fa-download mr-2"></i> Ekspor
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
