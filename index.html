@@ -13,15 +13,27 @@
         .fade-in {
             animation: fadeIn 1s ease-in-out;
         }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+        .shake {
+            animation: shake 0.5s;
+        }
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.querySelector('form');
             const resultsContainer = document.getElementById('results');
             const exportButton = document.getElementById('exportButton');
+            const skb400InputContainer = document.getElementById('skb400-container');
+            const skb500InputContainer = document.getElementById('skb500-container');
             const skb400Input = document.getElementById('skb400');
             const skb500Input = document.getElementById('skb500');
             const toggleButton = document.getElementById('toggleButton');
+            const notification = document.getElementById('notification');
 
             let scores = JSON.parse(localStorage.getItem('scores')) || [];
             let isSKB400Active = false;
@@ -29,13 +41,47 @@
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
 
-                const name = e.target[1].value;
-                const skdScore = parseFloat(e.target[2].value);
-                const skb400Score = parseFloat(e.target[3].value);
-                const skb500Score = parseFloat(e.target[4].value);
+                const nameInput = e.target[1];
+                const skdInput = e.target[2];
+                const skb400Input = e.target[3];
+                const skb500Input = e.target[4];
 
-                if (isNaN(skdScore) || (isNaN(skb400Score) && isNaN(skb500Score))) {
-                    alert('Please enter valid scores.');
+                const name = nameInput.value;
+                const skdScore = parseFloat(skdInput.value);
+                const skb400Score = parseFloat(skb400Input.value);
+                const skb500Score = parseFloat(skb500Input.value);
+
+                let hasError = false;
+
+                if (!name) {
+                    nameInput.classList.add('shake', 'border-red-500');
+                    hasError = true;
+                } else {
+                    nameInput.classList.remove('shake', 'border-red-500');
+                }
+
+                if (isNaN(skdScore)) {
+                    skdInput.classList.add('shake', 'border-red-500');
+                    hasError = true;
+                } else {
+                    skdInput.classList.remove('shake', 'border-red-500');
+                }
+
+                if (isSKB400Active && isNaN(skb400Score)) {
+                    skb400Input.classList.add('shake', 'border-red-500');
+                    hasError = true;
+                } else {
+                    skb400Input.classList.remove('shake', 'border-red-500');
+                }
+
+                if (!isSKB400Active && isNaN(skb500Score)) {
+                    skb500Input.classList.add('shake', 'border-red-500');
+                    hasError = true;
+                } else {
+                    skb500Input.classList.remove('shake', 'border-red-500');
+                }
+
+                if (hasError) {
                     return;
                 }
 
@@ -111,11 +157,21 @@
                 skb500Input.disabled = isSKB400Active;
                 skb400Input.value = '';
                 skb500Input.value = '';
+                skb400InputContainer.classList.toggle('hidden', !isSKB400Active);
+                skb500InputContainer.classList.toggle('hidden', isSKB400Active);
                 toggleButton.textContent = isSKB400Active ? 'Aktifkan SKB 500' : 'Aktifkan SKB 400';
+
+                // Show notification
+                notification.textContent = isSKB400Active ? 'SKB 400 diaktifkan' : 'SKB 500 diaktifkan';
+                notification.classList.remove('hidden');
+                setTimeout(() => {
+                    notification.classList.add('hidden');
+                }, 3000);
             });
 
-            // Initialize with SKB 400 disabled
+            // Initialize with SKB 400 disabled and hidden
             skb400Input.disabled = true;
+            skb400InputContainer.classList.add('hidden');
 
             // Render results on page load
             renderResults();
@@ -155,15 +211,15 @@
                         </label>
                         <input type="number" placeholder="0-550" class="w-full p-2 bg-gray-700 text-gray-300 rounded">
                     </div>
-                    <div class="mb-4">
+                    <div id="skb400-container" class="mb-4 hidden">
                         <label class="block text-gray-400 mb-2 flex items-center">
-                            <i class="fas fa-calculator text-gray-400 mr-2"></i> Skor SKB (maks 400) Khusus 80 Soal
+                            <i class="fas fa-calculator text-gray-400 mr-2"></i> Skor SKB (maks 400)
                         </label>
                         <input id="skb400" type="number" placeholder="0-400" class="w-full p-2 bg-gray-700 text-gray-300 rounded">
                     </div>
-                    <div class="mb-4">
+                    <div id="skb500-container" class="mb-4">
                         <label class="block text-gray-400 mb-2 flex items-center">
-                            <i class="fas fa-calculator text-gray-400 mr-2"></i> Skor SKB (maks 500) Khusus 100 Soal
+                            <i class="fas fa-calculator text-gray-400 mr-2"></i> Skor SKB (maks 500)
                         </label>
                         <input id="skb500" type="number" placeholder="0-500" class="w-full p-2 bg-gray-700 text-gray-300 rounded">
                     </div>
@@ -182,6 +238,7 @@
                 </button>
             </div>
         </div>
+        <div id="notification" class="fixed top-4 right-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg hidden"></div>
         <footer class="mt-8 text-gray-400">
             <p>Copyright © 2024 Damar Wulan</p>
         </footer>
