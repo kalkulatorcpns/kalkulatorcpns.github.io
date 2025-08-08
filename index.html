@@ -1,247 +1,313 @@
-<html lang="en">
+<!DOCTYPE html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPNS Kalkulator</title>
+    <title>Agenda Kegiatan Pimpinan</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .transition-all {
+            transition: all 0.3s ease;
         }
-        .fade-in {
-            animation: fadeIn 1s ease-in-out;
+        .agenda-item:nth-child(even) {
+            background-color: #f8fafc;
         }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-        }
-        .shake {
-            animation: shake 0.5s;
+        .agenda-item:hover {
+            background-color: #f1f5f9;
         }
     </style>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.querySelector('form');
-            const resultsContainer = document.getElementById('results');
-            const exportButton = document.getElementById('exportButton');
-            const skb400InputContainer = document.getElementById('skb400-container');
-            const skb500InputContainer = document.getElementById('skb500-container');
-            const skb400Input = document.getElementById('skb400');
-            const skb500Input = document.getElementById('skb500');
-            const toggleButton = document.getElementById('toggleButton');
-            const notification = document.getElementById('notification');
-
-            let scores = JSON.parse(localStorage.getItem('scores')) || [];
-            let isSKB400Active = false;
-
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-
-                const nameInput = e.target[1];
-                const skdInput = e.target[2];
-                const skb400Input = e.target[3];
-                const skb500Input = e.target[4];
-
-                const name = nameInput.value;
-                const skdScore = parseFloat(skdInput.value);
-                const skb400Score = parseFloat(skb400Input.value);
-                const skb500Score = parseFloat(skb500Input.value);
-
-                let hasError = false;
-
-                if (!name) {
-                    nameInput.classList.add('shake', 'border-red-500');
-                    hasError = true;
-                } else {
-                    nameInput.classList.remove('shake', 'border-red-500');
-                }
-
-                if (isNaN(skdScore)) {
-                    skdInput.classList.add('shake', 'border-red-500');
-                    hasError = true;
-                } else {
-                    skdInput.classList.remove('shake', 'border-red-500');
-                }
-
-                if (isSKB400Active && isNaN(skb400Score)) {
-                    skb400Input.classList.add('shake', 'border-red-500');
-                    hasError = true;
-                } else {
-                    skb400Input.classList.remove('shake', 'border-red-500');
-                }
-
-                if (!isSKB400Active && isNaN(skb500Score)) {
-                    skb500Input.classList.add('shake', 'border-red-500');
-                    hasError = true;
-                } else {
-                    skb500Input.classList.remove('shake', 'border-red-500');
-                }
-
-                if (hasError) {
-                    return;
-                }
-
-                const skdResult = (skdScore / 550) * 40;
-                let skbResult = 0;
-
-                if (isSKB400Active && !isNaN(skb400Score)) {
-                    skbResult = (skb400Score / 400) * 60;
-                } else if (!isSKB400Active && !isNaN(skb500Score)) {
-                    skbResult = (skb500Score / 500) * 60;
-                }
-
-                const totalScore = skdResult + skbResult;
-
-                scores.push({ name, skdScore, skbScore: isSKB400Active ? skb400Score : skb500Score, totalScore });
-                scores.sort((a, b) => b.totalScore - a.totalScore);
-
-                localStorage.setItem('scores', JSON.stringify(scores));
-                renderResults();
-
-                // Clear input fields
-                form.reset();
-                skb400Input.disabled = !isSKB400Active;
-                skb500Input.disabled = isSKB400Active;
-            });
-
-            function renderResults() {
-                resultsContainer.innerHTML = '';
-
-                if (scores.length === 0) {
-                    resultsContainer.innerHTML = '<p class="text-gray-400 mb-4">Tidak ada skor yang tersedia. Mulailah dengan menambahkan skor baru.</p>';
-                } else {
-                    scores.forEach((score, index) => {
-                        const resultItem = document.createElement('div');
-                        resultItem.className = 'flex justify-between items-center mb-2 p-2 bg-gray-700 rounded';
-
-                        const resultText = document.createElement('div');
-                        resultText.className = 'flex flex-col';
-                        resultText.innerHTML = `<span class="font-bold">${index + 1}. ${score.name}</span>
-                                                <span>SKD: ${score.skdScore} | SKB: ${score.skbScore} | Total: ${score.totalScore.toFixed(2)}</span>`;
-
-                        const deleteButton = document.createElement('button');
-                        deleteButton.className = 'text-red-500 hover:text-red-700';
-                        deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-                        deleteButton.addEventListener('click', () => {
-                            scores.splice(index, 1);
-                            localStorage.setItem('scores', JSON.stringify(scores));
-                            renderResults();
-                        });
-
-                        resultItem.appendChild(resultText);
-                        resultItem.appendChild(deleteButton);
-
-                        resultsContainer.appendChild(resultItem);
-                    });
-                }
-            }
-
-            exportButton.addEventListener('click', () => {
-                const csvContent = "data:text/csv;charset=utf-8," + scores.map(e => `${e.name},${e.skdScore},${e.skbScore},${e.totalScore.toFixed(2)}`).join("\n");
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "scores.csv");
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            });
-
-            toggleButton.addEventListener('click', () => {
-                isSKB400Active = !isSKB400Active;
-                skb400Input.disabled = !isSKB400Active;
-                skb500Input.disabled = isSKB400Active;
-                skb400Input.value = '';
-                skb500Input.value = '';
-                skb400InputContainer.classList.toggle('hidden', !isSKB400Active);
-                skb500InputContainer.classList.toggle('hidden', isSKB400Active);
-                toggleButton.textContent = isSKB400Active ? 'Aktifkan SKB 500' : 'Aktifkan SKB 400';
-
-                // Show notification
-                notification.textContent = isSKB400Active ? 'SKB 400 diaktifkan' : 'SKB 500 diaktifkan';
-                notification.classList.remove('hidden');
-                setTimeout(() => {
-                    notification.classList.add('hidden');
-                }, 3000);
-            });
-
-            // Initialize with SKB 400 disabled and hidden
-            skb400Input.disabled = true;
-            skb400InputContainer.classList.add('hidden');
-
-            // Render results on page load
-            renderResults();
-
-            // Add fade-in animation to the main container
-            document.querySelector('.main-container').classList.add('fade-in');
-        });
-    </script>
 </head>
-<body class="bg-gray-900 text-white">
-    <div class="min-h-screen flex flex-col items-center justify-center p-4 main-container">
-        <div class="flex justify-between items-center w-full max-w-4xl mb-8">
-            <div>
-                <h1 class="text-4xl font-bold text-purple-500">CPNS <span class="text-yellow-400">Kalkulator</span></h1>
-                <p class="text-gray-400">Hitung dan lacak skor SKD & SKB</p>
-            </div>
-            <a href="https://www.instagram.com/_damarwulan/" target="_blank" class="text-gray-400 hover:text-white">
-                <i class="fab fa-instagram text-2xl"></i>
-            </a>
-        </div>
-        <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 w-full max-w-4xl">
-            <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full">
-                <h2 class="text-xl font-bold mb-4 flex items-center">
-                    <i class="fas fa-calculator text-purple-500 mr-2"></i> Kalkulator Skor
-                </h2>
-                <form>
-                    <button id="toggleButton" type="button" class="w-full mb-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Aktifkan SKB 400</button>
-                    <div class="mb-4">
-                        <label class="block text-gray-400 mb-2 flex items-center">
-                            <i class="fas fa-user text-gray-400 mr-2"></i> Nama Peserta
-                        </label>
-                        <input type="text" placeholder="Masukkan nama peserta" class="w-full p-2 bg-gray-700 text-gray-300 rounded">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-400 mb-2 flex items-center">
-                            <i class="fas fa-calculator text-gray-400 mr-2"></i> Skor SKD (maks 550)
-                        </label>
-                        <input type="number" placeholder="0-550" class="w-full p-2 bg-gray-700 text-gray-300 rounded">
-                    </div>
-                    <div id="skb400-container" class="mb-4 hidden">
-                        <label class="block text-gray-400 mb-2 flex items-center">
-                            <i class="fas fa-calculator text-gray-400 mr-2"></i> Skor SKB (maks 400)
-                        </label>
-                        <input id="skb400" type="number" placeholder="0-400" class="w-full p-2 bg-gray-700 text-gray-300 rounded">
-                    </div>
-                    <div id="skb500-container" class="mb-4">
-                        <label class="block text-gray-400 mb-2 flex items-center">
-                            <i class="fas fa-calculator text-gray-400 mr-2"></i> Skor SKB (maks 500)
-                        </label>
-                        <input id="skb500" type="number" placeholder="0-500" class="w-full p-2 bg-gray-700 text-gray-300 rounded">
-                    </div>
-                    <button type="submit" class="w-full p-2 bg-purple-500 text-white rounded hover:bg-purple-600">Hitung & Simpan</button>
-                </form>
-            </div>
-            <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full">
-                <h2 class="text-xl font-bold mb-4 flex items-center">
-                    <i class="fas fa-users text-yellow-400 mr-2"></i> Hasil
-                </h2>
-                <div id="results" class="mb-4">
-                    <p class="text-gray-400 mb-4">Tidak ada skor yang tersedia. Mulailah dengan menambahkan skor baru.</p>
+<body class="bg-gray-50">
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Login Admin</h2>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-gray-700 mb-2">Username</label>
+                    <input type="text" id="username" name="username" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
-                <button id="exportButton" class="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600">
-                    <i class="fas fa-download mr-2"></i> Ekspor
+                <div>
+                    <label for="password" class="block text-gray-700 mb-2">Password</label>
+                    <input type="password" id="password" name="password" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-all">
+                    Masuk
+                </button>
+            </form>
+            <button id="closeLoginModal" class="mt-4 w-full bg-gray-200 text-gray-800 py-2 rounded-md hover:bg-gray-300 transition-all">
+                    Batal
+                </button>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r from-blue-800 to-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold">Agenda Kegiatan Pimpinan</h1>
+                <p class="text-blue-100">Informasi lengkap agenda kegiatan pimpinan</p>
+            </div>
+            <button id="loginButton" class="bg-white text-blue-700 px-4 py-2 rounded-md font-medium hover:bg-blue-50 transition-all">
+                Admin Login
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Public Agenda Display -->
+        <div id="publicView">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Daftar Kegiatan Terkini</h2>
+                <div class="relative">
+                    <input type="text" id="searchAgenda" placeholder="Cari kegiatan..." 
+                           class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="grid grid-cols-12 bg-gray-100 text-gray-700 font-medium p-4 border-b">
+                    <div class="col-span-1">No</div>
+                    <div class="col-span-5">Nama Kegiatan</div>
+                    <div class="col-span-3">Tanggal Mulai</div>
+                    <div class="col-span-3">Tanggal Selesai</div>
+                </div>
+                <div id="agendaList">
+                    <!-- Agenda items will be dynamically loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Panel (Hidden by default) -->
+        <div id="adminPanel" class="hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Panel Admin - Kelola Agenda</h2>
+                <button id="logoutButton" class="bg-red-600 text-white px-4 py-2 rounded-md font-medium hover:bg-red-700 transition-all">
+                    Logout
                 </button>
             </div>
+
+            <div class="bg-white rounded-lg shadow p-6 mb-8">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">Tambah Kegiatan Baru</h3>
+                <form id="addAgendaForm" class="grid grid-cols-12 gap-4">
+                    <div class="col-span-12">
+                        <label for="eventName" class="block text-gray-700 mb-2">Nama Kegiatan</label>
+                        <input type="text" id="eventName" required 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="col-span-6">
+                        <label for="startDate" class="block text-gray-700 mb-2">Tanggal Mulai</label>
+                        <input type="date" id="startDate" required 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="col-span-6">
+                        <label for="endDate" class="block text-gray-700 mb-2">Tanggal Selesai</label>
+                        <input type="date" id="endDate" required 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="col-span-12">
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition-all">
+                            Tambah Kegiatan
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <h3 class="text-xl font-semibold p-4 border-b text-gray-800">Daftar Kegiatan</h3>
+                <div class="grid grid-cols-12 bg-gray-100 text-gray-700 font-medium p-4 border-b">
+                    <div class="col-span-1">No</div>
+                    <div class="col-span-5">Nama Kegiatan</div>
+                    <div class="col-span-3">Tanggal Mulai</div>
+                    <div class="col-span-2">Tanggal Selesai</div>
+                    <div class="col-span-1">Aksi</div>
+                </div>
+                <div id="adminAgendaList">
+                    <!-- Admin agenda items will be dynamically loaded here -->
+                </div>
+            </div>
         </div>
-        <div id="notification" class="fixed top-4 right-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg hidden"></div>
-        <footer class="mt-8 text-gray-400">
-            <p>Copyright © 2024 Damar Wulan</p>
-        </footer>
-    </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2023 Agenda Kegiatan Pimpinan. Hak Cipta Dilindungi.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Sample data for agenda
+        let agendaData = [
+            { id: 1, name: "Rapat Koordinasi Tim", startDate: "2023-11-15", endDate: "2023-11-15" },
+            { id: 2, name: "Kunjungan Kerja ke Cabang Bandung", startDate: "2023-11-18", endDate: "2023-11-20" },
+            { id: 3, name: "Seminar Nasional Kepemimpinan", startDate: "2023-11-22", endDate: "2023-11-24" },
+            { id: 4, name: "Evaluasi Kinerja Triwulan", startDate: "2023-11-27", endDate: "2023-11-28" }
+        ];
+
+        // DOM elements
+        const loginButton = document.getElementById('loginButton');
+        const closeLoginModal = document.getElementById('closeLoginModal');
+        const loginModal = document.getElementById('loginModal');
+        const loginForm = document.getElementById('loginForm');
+        const logoutButton = document.getElementById('logoutButton');
+        const publicView = document.getElementById('publicView');
+        const adminPanel = document.getElementById('adminPanel');
+        const agendaList = document.getElementById('agendaList');
+        const adminAgendaList = document.getElementById('adminAgendaList');
+        const searchAgenda = document.getElementById('searchAgenda');
+        const addAgendaForm = document.getElementById('addAgendaForm');
+
+        // Show/hide login modal
+        loginButton.addEventListener('click', () => {
+            loginModal.classList.remove('hidden');
+        });
+
+        closeLoginModal.addEventListener('click', () => {
+            loginModal.classList.add('hidden');
+        });
+
+        // Handle login
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === 'admin' && password === 'admin') {
+                loginModal.classList.add('hidden');
+                publicView.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                renderAdminAgendaList();
+            } else {
+                alert('Username atau password salah!');
+            }
+        });
+
+        // Handle logout
+        logoutButton.addEventListener('click', () => {
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                adminPanel.classList.add('hidden');
+                publicView.classList.remove('hidden');
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+            }
+        });
+
+        // Add new agenda
+        addAgendaForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('eventName').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            // Generate new ID
+            const newId = agendaData.length > 0 ? Math.max(...agendaData.map(item => item.id)) + 1 : 1;
+
+            // Add new agenda
+            agendaData.unshift({
+                id: newId,
+                name,
+                startDate,
+                endDate
+            });
+
+            // Reset form
+            addAgendaForm.reset();
+
+            // Refresh lists
+            renderAgendaList();
+            renderAdminAgendaList();
+
+            // Show success message
+            alert('Kegiatan berhasil ditambahkan!');
+        });
+
+        // Delete agenda
+        function deleteAgenda(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus kegiatan ini?')) {
+                agendaData = agendaData.filter(item => item.id !== id);
+                renderAgendaList();
+                renderAdminAgendaList();
+            }
+        }
+
+        // Search agenda
+        searchAgenda.addEventListener('input', () => {
+            renderAgendaList();
+        });
+
+        // Format date to Indonesian format
+        function formatDate(dateString) {
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', options);
+        }
+
+        // Render agenda list for public view
+        function renderAgendaList() {
+            const searchTerm = searchAgenda.value.toLowerCase();
+            const filteredData = agendaData.filter(item => 
+                item.name.toLowerCase().includes(searchTerm)
+            ).sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+            agendaList.innerHTML = '';
+            
+            if (filteredData.length === 0) {
+                agendaList.innerHTML = '<div class="col-span-12 p-4 text-center text-gray-500">Tidak ada kegiatan yang ditemukan.</div>';
+                return;
+            }
+
+            filteredData.forEach((item, index) => {
+                const agendaItem = document.createElement('div');
+                agendaItem.className = 'grid grid-cols-12 p-4 border-b agenda-item transition-all';
+                
+                agendaItem.innerHTML = `
+                    <div class="col-span-1 text-gray-700">${index + 1}</div>
+                    <div class="col-span-5 font-medium text-gray-800">${item.name}</div>
+                    <div class="col-span-3 text-gray-600">${formatDate(item.startDate)}</div>
+                    <div class="col-span-3 text-gray-600">${formatDate(item.endDate)}</div>
+                `;
+                
+                agendaList.appendChild(agendaItem);
+            });
+        }
+
+        // Render agenda list for admin view
+        function renderAdminAgendaList() {
+            adminAgendaList.innerHTML = '';
+            
+            if (agendaData.length === 0) {
+                adminAgendaList.innerHTML = '<div class="col-span-12 p-4 text-center text-gray-500">Belum ada kegiatan.</div>';
+                return;
+            }
+
+            agendaData.forEach((item, index) => {
+                const agendaItem = document.createElement('div');
+                agendaItem.className = 'grid grid-cols-12 p-4 border-b agenda-item transition-all';
+                
+                agendaItem.innerHTML = `
+                    <div class="col-span-1 text-gray-700">${index + 1}</div>
+                    <div class="col-span-5 font-medium text-gray-800">${item.name}</div>
+                    <div class="col-span-3 text-gray-600">${formatDate(item.startDate)}</div>
+                    <div class="col-span-2 text-gray-600">${formatDate(item.endDate)}</div>
+                    <div class="col-span-1">
+                        <button onclick="deleteAgenda(${item.id})" class="text-red-600 hover:text-red-800 transition-all">
+                            Hapus
+                        </button>
+                    </div>
+                `;
+                
+                adminAgendaList.appendChild(agendaItem);
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAgendaList();
+        });
+    </script>
 </body>
 </html>
