@@ -211,7 +211,7 @@
         <!-- Empty State -->
         <div id="emptyState" class="hidden text-center py-12">
             <div class="w-24 h-24 mx-auto mb-6">
-                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/e71d2c7e-7770-42f5-ba0b-2d3fb7a36165.png" alt="Empty calendar illustration showing no events scheduled" class="rounded-full">
+                <img src="https://placehold.co/200x200" alt="Empty calendar illustration showing no events scheduled" class="rounded-full">
             </div>
             <h3 class="text-xl font-bold text-gray-700 mb-2">Tidak ada kegiatan</h3>
             <p class="text-gray-500 max-w-md mx-auto">Tidak ada kegiatan yang sesuai dengan filter yang dipilih. Silakan coba dengan kriteria berbeda.</p>
@@ -241,7 +241,7 @@
                     <span id="detailLocation">Lokasi Kegiatan</span>
                 </div>
                 <div id="detailImage" class="h-48 w-full bg-gray-200 rounded-lg mb-4 overflow-hidden">
-                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/a96f9896-9d44-49c1-836e-36bc30987c8e.png" alt="Sample event image showing meeting room setup" class="w-full h-full object-cover">
+                    <img src="https://placehold.co/800x400" alt="Sample event image showing meeting room setup" class="w-full h-full object-cover">
                 </div>
                 <p id="detailDescription" class="text-gray-700">
                     Deskripsi lengkap kegiatan akan ditampilkan di sini. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget aliquam ultricies, nunc nisl aliquet nunc, quis aliquam nisl nunc eu nisl.
@@ -279,26 +279,10 @@
         </div>
     </footer>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCeG0cY_skRFjJigW0d3mkdXswCUxY8o-c",
-            authDomain: "agenda-bappeda-benteng.firebaseapp.com",
-            projectId: "agenda-bappeda-benteng",
-            storageBucket: "agenda-bappeda-benteng.firebasestorage.app",
-            messagingSenderId: "515552570595",
-            appId: "1:515552570595:web:37bf1820b66030a49969d6"
-        };
-        
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        
         // Database Initialization
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize IndexedDB for offline support
+            // Initialize IndexedDB
             const dbName = 'LeaderAgendaDB';
             const dbVersion = 1;
             let db;
@@ -381,7 +365,7 @@
                                 location: 'Ruang Rapat Utama',
                                 description: 'Rapat koordinasi bulanan seluruh departemen untuk membahas progres dan tantangan terkini.',
                                 priority: 'high',
-                                image: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/48615893-0d94-476a-91e1-b69aaf0fd093.png'
+                                image: 'https://placehold.co/800x400?text=Rapat+Koordinasi'
                             },
                             {
                                 title: 'Kunjungan Kerja ke Cabang Regional',
@@ -390,7 +374,7 @@
                                 location: 'Kantor Cabang Regional',
                                 description: 'Kunjungan kerja rutin ke cabang regional untuk memantau perkembangan bisnis di daerah.',
                                 priority: 'medium',
-                                image: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/7e7021a5-caa3-4fd5-9ef0-69a27c8bb731.png'
+                                image: 'https://placehold.co/800x400?text=Kunjungan+Kerja'
                             },
                             {
                                 title: 'Presentasi Proyek Baru',
@@ -399,7 +383,7 @@
                                 location: 'Ruang Meeting lantai 10',
                                 description: 'Presentasi proposal proyek baru kepada stakeholder utama untuk mendapatkan persetujuan.',
                                 priority: 'medium',
-                                image: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/4412171c-f446-4c07-9894-6468b05996f7.png'
+                                image: 'https://placehold.co/800x400?text=Presentasi+Proyek'
                             },
                             {
                                 title: 'Pelatihan Kepemimpinan',
@@ -408,67 +392,31 @@
                                 location: 'Ballroom Hotel Grand Mercure',
                                 description: 'Pelatihan kepemimpinan untuk seluruh manajer level menengah dengan pembicara ahli dari konsultan ternama.',
                                 priority: 'low',
-                                image: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1e3a08fc-fee2-4fa5-b497-6cd6ca521c9d.png'
+                                image: 'https://placehold.co/800x400?text=Pelatihan+Kepemimpinan'
                             }
                         ];
                         
-                        const batch = db.batch();
+                        const transaction = db.transaction(['events'], 'readwrite');
+                        const store = transaction.objectStore('events');
+                        
                         sampleEvents.forEach(event => {
-                            const docRef = db.collection("events").doc();
-                            batch.set(docRef, event);
+                            store.add(event);
                         });
                         
-                        batch.commit().then(() => {
-                            console.log('Sample data added successfully to Firestore');
-                            syncFromFirestore();
-                        });
+                        transaction.oncomplete = function() {
+                            console.log('Sample data added successfully');
+                            loadEvents();
+                        };
                     }
                 };
             }
             
-            // Add sync functions
-            function syncFromFirestore() {
-                db.collection("events").orderBy("date", "desc").get().then((querySnapshot) => {
-                    const transaction = window.idb.transaction(['events'], 'readwrite');
-                    const store = transaction.objectStore('events');
-                    
-                    // Clear local data first
-                    store.clear();
-                    
-                    // Add Firestore data to IndexedDB
-                    querySnapshot.forEach((doc) => {
-                        store.add(doc.data());
-                    });
-                    
-                    transaction.oncomplete = function() {
-                        console.log("Synced data from Firestore");
-                        loadEvents();
-                    };
-                });
-            }
-            
-            // Sync local changes to Firestore
-            function syncToFirestore(event, id = null) {
-                if (id) {
-                    db.collection("events").doc(id.toString()).update(event);
-                } else {
-                    db.collection("events").add(event);
-                }
-            }
-            
             // Load events from database
             function loadEvents(searchTerm = '', priorityFilter = 'all', dateFilter = 'all') {
-                // Always check if online first
-                if (navigator.onLine) {
-                    syncFromFirestore();
-                    return;
-                }
-                
-                // Offline fallback
-                const transaction = window.idb.transaction(['events'], 'readonly');
+                const transaction = db.transaction(['events'], 'readonly');
                 const store = transaction.objectStore('events');
                 const index = store.index('date');
-                const request = index.openCursor(null, 'prev');
+                const request = index.openCursor(null, 'prev'); // Descending order to get newest first
                 
                 const eventsContainer = document.getElementById('eventsContainer');
                 eventsContainer.innerHTML = '';
@@ -663,7 +611,7 @@
                 const location = document.getElementById('eventLocation').value;
                 const description = document.getElementById('eventDescription').value;
                 const priority = document.getElementById('eventPriority').value;
-                const image = document.getElementById('eventImage').value || 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/dfecb1bd-1b51-41cb-9d85-a249c3795401.png';
+                const image = document.getElementById('eventImage').value || 'https://placehold.co/800x400?text=Event+Image';
                 
                 const eventDate = new Date(date);
                 eventDate.setHours(0, 0, 0, 0);
