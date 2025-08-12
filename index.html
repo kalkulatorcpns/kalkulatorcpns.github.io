@@ -5,308 +5,829 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda Kegiatan Pimpinan</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .transition-all {
-            transition: all 0.3s ease;
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #3b82f6;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
         }
-        .agenda-item:nth-child(even) {
-            background-color: #f8fafc;
-        }
-        .agenda-item:hover {
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f1f5f9;
+            min-height: 100vh;
+        }
+        
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .login-container {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-flex-col {
+                flex-direction: column;
+            }
+            
+            .mobile-w-full {
+                width: 100% !important;
+            }
+        }
+        
+        .event-priority-high {
+            border-left: 4px solid #ef4444;
+        }
+        
+        .event-priority-medium {
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .event-priority-low {
+            border-left: 4px solid #10b981;
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body>
     <!-- Login Modal -->
     <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-8 rounded-lg w-full max-w-md">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800">Login Admin</h2>
-            <form id="loginForm" class="space-y-4">
-                <div>
+        <div class="bg-white rounded-lg p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Login Admin</h2>
+            <form id="loginForm">
+                <div class="mb-4">
                     <label for="username" class="block text-gray-700 mb-2">Username</label>
-                    <input type="text" id="username" name="username" 
-                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
-                <div>
+                <div class="mb-6">
                     <label for="password" class="block text-gray-700 mb-2">Password</label>
-                    <input type="password" id="password" name="password" 
-                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="password" id="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-all">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">
                     Masuk
                 </button>
             </form>
-            <button id="closeLoginModal" class="mt-4 w-full bg-gray-200 text-gray-800 py-2 rounded-md hover:bg-gray-300 transition-all">
-                    Batal
-                </button>
         </div>
     </div>
 
-    <!-- Header Section -->
-    <header class="bg-gradient-to-r from-blue-800 to-blue-600 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-6 flex justify-between items-center">
-            <div>
-                <h1 class="text-3xl font-bold">Agenda Kegiatan Pimpinan</h1>
-                <p class="text-blue-100">Informasi lengkap agenda kegiatan pimpinan</p>
+    <!-- Admin Modal -->
+    <div id="adminModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Panel Admin</h2>
+                <button id="closeAdminModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <button id="loginButton" class="bg-white text-blue-700 px-4 py-2 rounded-md font-medium hover:bg-blue-50 transition-all">
-                Admin Login
+            
+            <div class="flex flex-col md:flex-row gap-6 mb-8">
+                <div class="w-full md:w-1/2">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Tambah Kegiatan Baru</h3>
+                    <form id="addEventForm" class="space-y-4">
+                        <div>
+                            <label for="eventTitle" class="block text-gray-700 mb-1">Judul Kegiatan</label>
+                            <input type="text" id="eventTitle" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-1/2">
+                                <label for="eventDate" class="block text-gray-700 mb-1">Tanggal</label>
+                                <input type="date" id="eventDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div class="w-1/2">
+                                <label for="eventTime" class="block text-gray-700 mb-1">Waktu</label>
+                                <input type="time" id="eventTime" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="eventLocation" class="block text-gray-700 mb-1">Lokasi</label>
+                            <input type="text" id="eventLocation" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="eventDescription" class="block text-gray-700 mb-1">Deskripsi</label>
+                            <textarea id="eventDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <div>
+                            <label for="eventPriority" class="block text-gray-700 mb-1">Prioritas</label>
+                            <select id="eventPriority" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="high">Tinggi</option>
+                                <option value="medium" selected>Sedang</option>
+                                <option value="low">Rendah</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="eventImage" class="block text-gray-700 mb-1">Gambar (URL)</label>
+                            <input type="text" id="eventImage" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://example.com/image.jpg">
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">
+                            Tambah Kegiatan
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="w-full md:w-1/2">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Kelola Kegiatan</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-medium">Daftar Kegiatan</h4>
+                            <input type="text" id="searchEvent" placeholder="Cari kegiatan..." class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        <div id="adminEventList" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                            <!-- Events will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xl mr-3">AKP</div>
+                <h1 class="text-2xl font-bold text-gray-800">Agenda Kegiatan Pimpinan</h1>
+            </div>
+            <button id="adminLoginBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md flex items-center transition duration-200">
+                <i class="fas fa-user-shield mr-2"></i> Admin
             </button>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">
-        <!-- Public Agenda Display -->
-        <div id="publicView">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-bold text-gray-800">Daftar Kegiatan Terkini</h2>
-                <div class="relative">
-                    <input type="text" id="searchAgenda" placeholder="Cari kegiatan..." 
-                           class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <div class="flex flex-wrap gap-4 justify-between items-center">
+                <div class="flex gap-2 mobile-w-full">
+                    <input type="text" id="searchInput" placeholder="Cari kegiatan..." class="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="searchBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="grid grid-cols-12 bg-gray-100 text-gray-700 font-medium p-4 border-b">
-                    <div class="col-span-1">No</div>
-                    <div class="col-span-5">Nama Kegiatan</div>
-                    <div class="col-span-3">Tanggal Mulai</div>
-                    <div class="col-span-3">Tanggal Selesai</div>
-                </div>
-                <div id="agendaList">
-                    <!-- Agenda items will be dynamically loaded here -->
+                <div class="flex gap-2 mobile-flex-col mobile-w-full">
+                    <select id="priorityFilter" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mobile-w-full">
+                        <option value="all">Semua Prioritas</option>
+                        <option value="high">Tinggi</option>
+                        <option value="medium">Sedang</option>
+                        <option value="low">Rendah</option>
+                    </select>
+                    <select id="dateFilter" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mobile-w-full">
+                        <option value="all">Semua Tanggal</option>
+                        <option value="today">Hari Ini</option>
+                        <option value="week">Minggu Ini</option>
+                        <option value="month">Bulan Ini</option>
+                        <option value="future">Mendatang</option>
+                        <option value="past">Sudah Lewat</option>
+                    </select>
                 </div>
             </div>
         </div>
 
-        <!-- Admin Panel (Hidden by default) -->
-        <div id="adminPanel" class="hidden">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-bold text-gray-800">Panel Admin - Kelola Agenda</h2>
-                <button id="logoutButton" class="bg-red-600 text-white px-4 py-2 rounded-md font-medium hover:bg-red-700 transition-all">
-                    Logout
-                </button>
-            </div>
-
-            <div class="bg-white rounded-lg shadow p-6 mb-8">
-                <h3 class="text-xl font-semibold mb-4 text-gray-800">Tambah Kegiatan Baru</h3>
-                <form id="addAgendaForm" class="grid grid-cols-12 gap-4">
-                    <div class="col-span-12">
-                        <label for="eventName" class="block text-gray-700 mb-2">Nama Kegiatan</label>
-                        <input type="text" id="eventName" required 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <!-- Events List -->
+        <div id="eventsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Events will be loaded here -->
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div class="p-5">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Sedang</span>
+                        <span class="text-sm text-gray-500">20 Juni 2023 â€¢ 08:00</span>
                     </div>
-                    <div class="col-span-6">
-                        <label for="startDate" class="block text-gray-700 mb-2">Tanggal Mulai</label>
-                        <input type="date" id="startDate" required 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Rapat Koordinasi</h3>
+                    <p class="text-gray-600 mb-3 line-clamp-3">Rapat koordinasi internal membahas progres kegiatan terkini dan rencana ke depan.</p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <i class="fas fa-map-marker-alt mr-1"></i>
+                        <span>Ruang Rapat Utama</span>
                     </div>
-                    <div class="col-span-6">
-                        <label for="endDate" class="block text-gray-700 mb-2">Tanggal Selesai</label>
-                        <input type="date" id="endDate" required 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div class="col-span-12">
-                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition-all">
-                            Tambah Kegiatan
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <h3 class="text-xl font-semibold p-4 border-b text-gray-800">Daftar Kegiatan</h3>
-                <div class="grid grid-cols-12 bg-gray-100 text-gray-700 font-medium p-4 border-b">
-                    <div class="col-span-1">No</div>
-                    <div class="col-span-5">Nama Kegiatan</div>
-                    <div class="col-span-3">Tanggal Mulai</div>
-                    <div class="col-span-2">Tanggal Selesai</div>
-                    <div class="col-span-1">Aksi</div>
                 </div>
-                <div id="adminAgendaList">
-                    <!-- Admin agenda items will be dynamically loaded here -->
+                <div class="border-t border-gray-100 px-5 py-3 bg-gray-50">
+                    <a href="#" class="text-blue-600 hover:text-blue-800 font-medium">Lihat Detail</a>
                 </div>
             </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-12">
+            <div class="w-24 h-24 mx-auto mb-6">
+                <img src="https://placehold.co/200x200" alt="Empty calendar illustration showing no events scheduled" class="rounded-full">
+            </div>
+            <h3 class="text-xl font-bold text-gray-700 mb-2">Tidak ada kegiatan</h3>
+            <p class="text-gray-500 max-w-md mx-auto">Tidak ada kegiatan yang sesuai dengan filter yang dipilih. Silakan coba dengan kriteria berbeda.</p>
         </div>
     </main>
 
-    <!-- Footer Section -->
-    <footer class="bg-gray-800 text-white py-8">
-        <div class="container mx-auto px-4 text-center">
-            <p>&copy; 2023 Agenda Kegiatan Pimpinan. Hak Cipta Dilindungi.</p>
+    <!-- Event Detail Modal -->
+    <div id="eventDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <span id="detailPriority" class="inline-block px-3 py-1 rounded-full text-xs font-semibold mb-2">Sedang</span>
+                    <h2 id="detailTitle" class="text-2xl font-bold text-gray-800 mb-1">Judul Kegiatan</h2>
+                    <div class="flex items-center text-gray-600 mb-4">
+                        <i class="far fa-calendar-alt mr-2"></i>
+                        <span id="detailDateTime">20 Juni 2023 â€¢ 08:00 - 10:00</span>
+                    </div>
+                </div>
+                <button id="closeDetailModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <div class="flex items-center text-gray-700 mb-2">
+                    <i class="fas fa-map-marker-alt mr-2"></i>
+                    <span id="detailLocation">Lokasi Kegiatan</span>
+                </div>
+                <div id="detailImage" class="h-48 w-full bg-gray-200 rounded-lg mb-4 overflow-hidden">
+                    <img src="https://placehold.co/800x400" alt="Sample event image showing meeting room setup" class="w-full h-full object-cover">
+                </div>
+                <p id="detailDescription" class="text-gray-700">
+                    Deskripsi lengkap kegiatan akan ditampilkan di sini. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget aliquam ultricies, nunc nisl aliquet nunc, quis aliquam nisl nunc eu nisl.
+                </p>
+            </div>
+            
+            <div class="flex justify-end">
+                <button id="closeDetailBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg mr-3">AKP</div>
+                        <h2 class="text-xl font-bold">Agenda Kegiatan Pimpinan</h2>
+                    </div>
+                    <p class="text-gray-400 mt-2">Sistem informasi agenda kegiatan pimpinan terintegrasi.</p>
+                </div>
+                <div class="flex flex-col space-y-2">
+                    <a href="#" class="hover:text-blue-400 transition duration-200">Tentang Kami</a>
+                    <a href="#" class="hover:text-blue-400 transition duration-200">Kebijakan Privasi</a>
+                    <a href="#" class="hover:text-blue-400 transition duration-200">Kontak</a>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+                &copy; 2023 Agenda Kegiatan Pimpinan. Hak Cipta Dilindungi.
+            </div>
         </div>
     </footer>
 
     <script>
-        // Sample data for agenda
-        let agendaData = [
-            { id: 1, name: "Rapat Koordinasi Tim", startDate: "2023-11-15", endDate: "2023-11-15" },
-            { id: 2, name: "Kunjungan Kerja ke Cabang Bandung", startDate: "2023-11-18", endDate: "2023-11-20" },
-            { id: 3, name: "Seminar Nasional Kepemimpinan", startDate: "2023-11-22", endDate: "2023-11-24" },
-            { id: 4, name: "Evaluasi Kinerja Triwulan", startDate: "2023-11-27", endDate: "2023-11-28" }
-        ];
-
-        // DOM elements
-        const loginButton = document.getElementById('loginButton');
-        const closeLoginModal = document.getElementById('closeLoginModal');
-        const loginModal = document.getElementById('loginModal');
-        const loginForm = document.getElementById('loginForm');
-        const logoutButton = document.getElementById('logoutButton');
-        const publicView = document.getElementById('publicView');
-        const adminPanel = document.getElementById('adminPanel');
-        const agendaList = document.getElementById('agendaList');
-        const adminAgendaList = document.getElementById('adminAgendaList');
-        const searchAgenda = document.getElementById('searchAgenda');
-        const addAgendaForm = document.getElementById('addAgendaForm');
-
-        // Show/hide login modal
-        loginButton.addEventListener('click', () => {
-            loginModal.classList.remove('hidden');
-        });
-
-        closeLoginModal.addEventListener('click', () => {
-            loginModal.classList.add('hidden');
-        });
-
-        // Handle login
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            if (username === 'admin' && password === 'admin') {
-                loginModal.classList.add('hidden');
-                publicView.classList.add('hidden');
-                adminPanel.classList.remove('hidden');
-                renderAdminAgendaList();
-            } else {
-                alert('Username atau password salah!');
-            }
-        });
-
-        // Handle logout
-        logoutButton.addEventListener('click', () => {
-            if (confirm('Apakah Anda yakin ingin logout?')) {
-                adminPanel.classList.add('hidden');
-                publicView.classList.remove('hidden');
-                document.getElementById('username').value = '';
-                document.getElementById('password').value = '';
-            }
-        });
-
-        // Add new agenda
-        addAgendaForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('eventName').value;
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-
-            // Generate new ID
-            const newId = agendaData.length > 0 ? Math.max(...agendaData.map(item => item.id)) + 1 : 1;
-
-            // Add new agenda
-            agendaData.unshift({
-                id: newId,
-                name,
-                startDate,
-                endDate
-            });
-
-            // Reset form
-            addAgendaForm.reset();
-
-            // Refresh lists
-            renderAgendaList();
-            renderAdminAgendaList();
-
-            // Show success message
-            alert('Kegiatan berhasil ditambahkan!');
-        });
-
-        // Delete agenda
-        function deleteAgenda(id) {
-            if (confirm('Apakah Anda yakin ingin menghapus kegiatan ini?')) {
-                agendaData = agendaData.filter(item => item.id !== id);
-                renderAgendaList();
-                renderAdminAgendaList();
-            }
-        }
-
-        // Search agenda
-        searchAgenda.addEventListener('input', () => {
-            renderAgendaList();
-        });
-
-        // Format date to Indonesian format
-        function formatDate(dateString) {
-            const options = { day: 'numeric', month: 'long', year: 'numeric' };
-            const date = new Date(dateString);
-            return date.toLocaleDateString('id-ID', options);
-        }
-
-        // Render agenda list for public view
-        function renderAgendaList() {
-            const searchTerm = searchAgenda.value.toLowerCase();
-            const filteredData = agendaData.filter(item => 
-                item.name.toLowerCase().includes(searchTerm)
-            ).sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-
-            agendaList.innerHTML = '';
+        // Database Initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize IndexedDB
+            const dbName = 'LeaderAgendaDB';
+            const dbVersion = 1;
+            let db;
             
-            if (filteredData.length === 0) {
-                agendaList.innerHTML = '<div class="col-span-12 p-4 text-center text-gray-500">Tidak ada kegiatan yang ditemukan.</div>';
-                return;
-            }
-
-            filteredData.forEach((item, index) => {
-                const agendaItem = document.createElement('div');
-                agendaItem.className = 'grid grid-cols-12 p-4 border-b agenda-item transition-all';
-                
-                agendaItem.innerHTML = `
-                    <div class="col-span-1 text-gray-700">${index + 1}</div>
-                    <div class="col-span-5 font-medium text-gray-800">${item.name}</div>
-                    <div class="col-span-3 text-gray-600">${formatDate(item.startDate)}</div>
-                    <div class="col-span-3 text-gray-600">${formatDate(item.endDate)}</div>
-                `;
-                
-                agendaList.appendChild(agendaItem);
-            });
-        }
-
-        // Render agenda list for admin view
-        function renderAdminAgendaList() {
-            adminAgendaList.innerHTML = '';
+            const request = indexedDB.open(dbName, dbVersion);
             
-            if (agendaData.length === 0) {
-                adminAgendaList.innerHTML = '<div class="col-span-12 p-4 text-center text-gray-500">Belum ada kegiatan.</div>';
-                return;
-            }
-
-            agendaData.forEach((item, index) => {
-                const agendaItem = document.createElement('div');
-                agendaItem.className = 'grid grid-cols-12 p-4 border-b agenda-item transition-all';
+            request.onerror = function(event) {
+                console.error('Database error:', event.target.error);
+            };
+            
+            request.onupgradeneeded = function(event) {
+                db = event.target.result;
                 
-                agendaItem.innerHTML = `
-                    <div class="col-span-1 text-gray-700">${index + 1}</div>
-                    <div class="col-span-5 font-medium text-gray-800">${item.name}</div>
-                    <div class="col-span-3 text-gray-600">${formatDate(item.startDate)}</div>
-                    <div class="col-span-2 text-gray-600">${formatDate(item.endDate)}</div>
-                    <div class="col-span-1">
-                        <button onclick="deleteAgenda(${item.id})" class="text-red-600 hover:text-red-800 transition-all">
-                            Hapus
+                // Create events store
+                const eventsStore = db.createObjectStore('events', {
+                    keyPath: 'id',
+                    autoIncrement: true
+                });
+                
+                // Create indexes for searching
+                eventsStore.createIndex('title', 'title', { unique: false });
+                eventsStore.createIndex('date', 'date', { unique: false });
+                eventsStore.createIndex('priority', 'priority', { unique: false });
+                
+                // Create users store
+                const usersStore = db.createObjectStore('users', {
+                    keyPath: 'username'
+                });
+                
+                // Add admin user
+                usersStore.add({
+                    username: 'admin',
+                    password: 'admin', // In production, this should be hashed
+                    role: 'admin'
+                });
+            };
+            
+            request.onsuccess = function(event) {
+                db = event.target.result;
+                console.log('Database initialized successfully');
+                loadInitialData();
+                loadEvents();
+                
+                // Check if admin exists, if not add default admin
+                checkAdminUser();
+            };
+            
+            function checkAdminUser() {
+                const transaction = db.transaction(['users'], 'readonly');
+                const store = transaction.objectStore('users');
+                const request = store.get('admin');
+                
+                request.onsuccess = function(event) {
+                    if (!event.target.result) {
+                        // Admin doesn't exist, add it
+                        const transaction = db.transaction(['users'], 'readwrite');
+                        const store = transaction.objectStore('users');
+                        store.add({
+                            username: 'admin',
+                            password: 'admin',
+                            role: 'admin'
+                        });
+                    }
+                };
+            }
+            
+            function loadInitialData() {
+                const transaction = db.transaction(['events'], 'readonly');
+                const store = transaction.objectStore('events');
+                const countRequest = store.count();
+                
+                countRequest.onsuccess = function() {
+                    if (countRequest.result === 0) {
+                        // Database is empty, add sample data
+                        const sampleEvents = [
+                            {
+                                title: 'Rapat Koordinasi Bulanan',
+                                date: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString(),
+                                time: '09:00',
+                                location: 'Ruang Rapat Utama',
+                                description: 'Rapat koordinasi bulanan seluruh departemen untuk membahas progres dan tantangan terkini.',
+                                priority: 'high',
+                                image: 'https://placehold.co/800x400?text=Rapat+Koordinasi'
+                            },
+                            {
+                                title: 'Kunjungan Kerja ke Cabang Regional',
+                                date: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString(),
+                                time: '07:30',
+                                location: 'Kantor Cabang Regional',
+                                description: 'Kunjungan kerja rutin ke cabang regional untuk memantau perkembangan bisnis di daerah.',
+                                priority: 'medium',
+                                image: 'https://placehold.co/800x400?text=Kunjungan+Kerja'
+                            },
+                            {
+                                title: 'Presentasi Proyek Baru',
+                                date: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
+                                time: '13:00',
+                                location: 'Ruang Meeting lantai 10',
+                                description: 'Presentasi proposal proyek baru kepada stakeholder utama untuk mendapatkan persetujuan.',
+                                priority: 'medium',
+                                image: 'https://placehold.co/800x400?text=Presentasi+Proyek'
+                            },
+                            {
+                                title: 'Pelatihan Kepemimpinan',
+                                date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
+                                time: '08:00',
+                                location: 'Ballroom Hotel Grand Mercure',
+                                description: 'Pelatihan kepemimpinan untuk seluruh manajer level menengah dengan pembicara ahli dari konsultan ternama.',
+                                priority: 'low',
+                                image: 'https://placehold.co/800x400?text=Pelatihan+Kepemimpinan'
+                            }
+                        ];
+                        
+                        const transaction = db.transaction(['events'], 'readwrite');
+                        const store = transaction.objectStore('events');
+                        
+                        sampleEvents.forEach(event => {
+                            store.add(event);
+                        });
+                        
+                        transaction.oncomplete = function() {
+                            console.log('Sample data added successfully');
+                            loadEvents();
+                        };
+                    }
+                };
+            }
+            
+            // Load events from database
+            function loadEvents(searchTerm = '', priorityFilter = 'all', dateFilter = 'all') {
+                const transaction = db.transaction(['events'], 'readonly');
+                const store = transaction.objectStore('events');
+                const index = store.index('date');
+                const request = index.openCursor(null, 'prev'); // Descending order to get newest first
+                
+                const eventsContainer = document.getElementById('eventsContainer');
+                eventsContainer.innerHTML = '';
+                
+                let hasEvents = false;
+                
+                request.onsuccess = function(event) {
+                    const cursor = event.target.result;
+                    
+                    if (cursor) {
+                        const event = cursor.value;
+                        
+                        // Apply filters
+                        const matchesSearch = !searchTerm || 
+                            event.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            event.location.toLowerCase().includes(searchTerm.toLowerCase());
+                            
+                        const matchesPriority = priorityFilter === 'all' || event.priority === priorityFilter;
+                        
+                        const eventDate = new Date(event.date);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        
+                        const endOfWeek = new Date(today);
+                        endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
+                        
+                        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                        
+                        let matchesDate = true;
+                        if (dateFilter !== 'all') {
+                            switch(dateFilter) {
+                                case 'today':
+                                    matchesDate = eventDate.toDateString() === today.toDateString();
+                                    break;
+                                case 'week':
+                                    matchesDate = eventDate >= today && eventDate <= endOfWeek;
+                                    break;
+                                case 'month':
+                                    matchesDate = eventDate >= today && eventDate <= endOfMonth;
+                                    break;
+                                case 'future':
+                                    matchesDate = eventDate >= today;
+                                    break;
+                                case 'past':
+                                    matchesDate = eventDate < today;
+                                    break;
+                            }
+                        }
+                        
+                        if (matchesSearch && matchesPriority && matchesDate) {
+                            hasEvents = true;
+                            displayEvent(event);
+                        }
+                        
+                        cursor.continue();
+                    } else {
+                        // No more events
+                        document.getElementById('emptyState').classList.toggle('hidden', hasEvents);
+                    }
+                };
+            }
+            
+            // Display single event in the UI
+            function displayEvent(event) {
+                const eventsContainer = document.getElementById('eventsContainer');
+                
+                const eventDate = new Date(event.date);
+                const now = new Date();
+                const isPastEvent = eventDate < now;
+                
+                const priorityClasses = {
+                    'high': 'bg-red-100 text-red-800',
+                    'medium': 'bg-yellow-100 text-yellow-800',
+                    'low': 'bg-green-100 text-green-800'
+                };
+                
+                const priorityText = {
+                    'high': 'Tinggi',
+                    'medium': 'Sedang',
+                    'low': 'Rendah'
+                };
+                
+                const eventElement = document.createElement('div');
+                eventElement.className = `bg-white rounded-lg shadow-sm overflow-hidden ${isPastEvent ? 'opacity-80' : ''}`;
+                eventElement.innerHTML = `
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${priorityClasses[event.priority]}">
+                                ${priorityText[event.priority]}
+                            </span>
+                            <span class="text-sm text-gray-500">
+                                ${formatDate(eventDate)} â€¢ ${event.time}
+                                ${isPastEvent ? '<span class="text-red-500 ml-1">(Lewat)</span>' : ''}
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">${event.title}</h3>
+                        <p class="text-gray-600 mb-3 line-clamp-3">${event.description}</p>
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="fas fa-map-marker-alt mr-1"></i>
+                            <span>${event.location}</span>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-100 px-5 py-3 bg-gray-50">
+                        <button class="text-blue-600 hover:text-blue-800 font-medium view-detail" data-id="${event.id}">
+                            Lihat Detail
                         </button>
+                        ${isPastEvent ? `
+                        <span class="text-gray-400 text-sm ml-4">
+                            <i class="far fa-check-circle mr-1"></i>
+                            Selesai
+                        </span>
+                        ` : ''}
                     </div>
                 `;
                 
-                adminAgendaList.appendChild(agendaItem);
+                eventsContainer.appendChild(eventElement);
+            }
+            
+            // Format date to Indonesian format
+            function formatDate(date) {
+                const options = { day: 'numeric', month: 'long', year: 'numeric' };
+                return date.toLocaleDateString('id-ID', options);
+            }
+            
+            // Format date with time
+            function formatDateTime(date, time) {
+                const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+                return `${date.toLocaleDateString('id-ID', options)} â€¢ ${time}`;
+            }
+            
+            // Event Listeners
+            
+            // Admin Login
+            document.getElementById('adminLoginBtn').addEventListener('click', function() {
+                document.getElementById('loginModal').classList.remove('hidden');
             });
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            renderAgendaList();
+            
+            // Close Login Modal
+            document.getElementById('loginModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
+            
+            // Login Form
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                const transaction = db.transaction(['users'], 'readonly');
+                const store = transaction.objectStore('users');
+                const request = store.get(username);
+                
+                request.onsuccess = function(event) {
+                    const user = event.target.result;
+                    
+                    if (user && user.password === password && user.role === 'admin') {
+                        document.getElementById('loginModal').classList.add('hidden');
+                        document.getElementById('adminModal').classList.remove('hidden');
+                        loadAdminEvents();
+                    } else {
+                        alert('Login gagal. Username atau password salah.');
+                    }
+                };
+                
+                request.onerror = function() {
+                    alert('Terjadi kesalahan saat login. Silakan coba lagi.');
+                };
+            });
+            
+            // Close Admin Modal
+            document.getElementById('closeAdminModal').addEventListener('click', function() {
+                document.getElementById('adminModal').classList.add('hidden');
+            });
+            
+            document.getElementById('adminModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
+            
+            // Add Event Form
+            document.getElementById('addEventForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const title = document.getElementById('eventTitle').value;
+                const date = document.getElementById('eventDate').value;
+                const time = document.getElementById('eventTime').value;
+                const location = document.getElementById('eventLocation').value;
+                const description = document.getElementById('eventDescription').value;
+                const priority = document.getElementById('eventPriority').value;
+                const image = document.getElementById('eventImage').value || 'https://placehold.co/800x400?text=Event+Image';
+                
+                const eventDate = new Date(date);
+                eventDate.setHours(0, 0, 0, 0);
+                
+                const newEvent = {
+                    title,
+                    date: eventDate.toISOString(),
+                    time,
+                    location,
+                    description,
+                    priority,
+                    image
+                };
+                
+                const transaction = db.transaction(['events'], 'readwrite');
+                const store = transaction.objectStore('events');
+                const request = store.add(newEvent);
+                
+                request.onsuccess = function() {
+                    alert('Kegiatan berhasil ditambahkan!');
+                    document.getElementById('addEventForm').reset();
+                    loadAdminEvents();
+                    loadEvents();
+                };
+                
+                request.onerror = function() {
+                    alert('Gagal menambahkan kegiatan. Silakan coba lagi.');
+                };
+            });
+            
+            // Load events for admin
+            function loadAdminEvents(searchTerm = '') {
+                const adminEventList = document.getElementById('adminEventList');
+                adminEventList.innerHTML = '';
+                
+                const transaction = db.transaction(['events'], 'readonly');
+                const store = transaction.objectStore('events');
+                const index = store.index('date');
+                const request = index.openCursor(null, 'prev'); // Newest first
+                
+                request.onsuccess = function(event) {
+                    const cursor = event.target.result;
+                    
+                    if (cursor) {
+                        const event = cursor.value;
+                        
+                        if (!searchTerm || 
+                            event.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            event.location.toLowerCase().includes(searchTerm.toLowerCase())) {
+                            
+                            const eventDate = new Date(event.date);
+                            const now = new Date();
+                            const isPastEvent = eventDate < now;
+                            
+                            const priorityColors = {
+                                'high': 'text-red-500',
+                                'medium': 'text-yellow-500',
+                                'low': 'text-green-500'
+                            };
+                            
+                            const eventElement = document.createElement('div');
+                            eventElement.className = 'bg-white p-3 rounded-lg border border-gray-200';
+                            eventElement.innerHTML = `
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-medium text-gray-800">${event.title}</h4>
+                                    <button class="delete-event text-red-500 hover:text-red-700" data-id="${cursor.key}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-500 mb-1">
+                                    <i class="far fa-calendar ${priorityColors[event.priority]} mr-1"></i>
+                                    <span>${formatDate(eventDate)} â€¢ ${event.time}</span>
+                                    ${isPastEvent ? '<span class="text-red-500 ml-2">(Lewat)</span>' : ''}
+                                </div>
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <i class="fas fa-map-marker-alt mr-1"></i>
+                                    <span>${event.location}</span>
+                                </div>
+                            `;
+                            
+                            adminEventList.appendChild(eventElement);
+                        }
+                        
+                        cursor.continue();
+                    }
+                };
+            }
+            
+            // Search events in admin panel
+            document.getElementById('searchEvent').addEventListener('input', function() {
+                loadAdminEvents(this.value.toLowerCase());
+            });
+            
+            // Delete event
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('delete-event') || e.target.closest('.delete-event')) {
+                    const button = e.target.classList.contains('delete-event') ? e.target : e.target.closest('.delete-event');
+                    const eventId = parseInt(button.getAttribute('data-id'));
+                    
+                    if (confirm('Apakah Anda yakin ingin menghapus kegiatan ini?')) {
+                        const transaction = db.transaction(['events'], 'readwrite');
+                        const store = transaction.objectStore('events');
+                        const request = store.delete(eventId);
+                        
+                        request.onsuccess = function() {
+                            alert('Kegiatan berhasil dihapus!');
+                            loadAdminEvents();
+                            loadEvents();
+                        };
+                        
+                        request.onerror = function() {
+                            alert('Gagal menghapus kegiatan. Silakan coba lagi.');
+                        };
+                    }
+                }
+            });
+            
+            // Search events
+            document.getElementById('searchBtn').addEventListener('click', function() {
+                const searchTerm = document.getElementById('searchInput').value;
+                const priorityFilter = document.getElementById('priorityFilter').value;
+                const dateFilter = document.getElementById('dateFilter').value;
+                loadEvents(searchTerm, priorityFilter, dateFilter);
+            });
+            
+            document.getElementById('searchInput').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    const searchTerm = document.getElementById('searchInput').value;
+                    const priorityFilter = document.getElementById('priorityFilter').value;
+                    const dateFilter = document.getElementById('dateFilter').value;
+                    loadEvents(searchTerm, priorityFilter, dateFilter);
+                }
+            });
+            
+            // Filter events
+            document.getElementById('priorityFilter').addEventListener('change', function() {
+                const searchTerm = document.getElementById('searchInput').value;
+                const priorityFilter = this.value;
+                const dateFilter = document.getElementById('dateFilter').value;
+                loadEvents(searchTerm, priorityFilter, dateFilter);
+            });
+            
+            document.getElementById('dateFilter').addEventListener('change', function() {
+                const searchTerm = document.getElementById('searchInput').value;
+                const priorityFilter = document.getElementById('priorityFilter').value;
+                const dateFilter = this.value;
+                loadEvents(searchTerm, priorityFilter, dateFilter);
+            });
+            
+            // View event details
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('view-detail') || e.target.closest('.view-detail')) {
+                    const button = e.target.classList.contains('view-detail') ? e.target : e.target.closest('.view-detail');
+                    const eventId = parseInt(button.getAttribute('data-id'));
+                    
+                    const transaction = db.transaction(['events'], 'readonly');
+                    const store = transaction.objectStore('events');
+                    const request = store.get(eventId);
+                    
+                    request.onsuccess = function(event) {
+                        const eventData = event.target.result;
+                        showEventDetails(eventData);
+                    };
+                    
+                    request.onerror = function() {
+                        alert('Gagal memuat detail kegiatan. Silakan coba lagi.');
+                    };
+                }
+            });
+            
+            // Show event details in modal
+            function showEventDetails(event) {
+                const priorityColors = {
+                    'high': 'bg-red-100 text-red-800',
+                    'medium': 'bg-yellow-100 text-yellow-800',
+                    'low': 'bg-green-100 text-green-800'
+                };
+                
+                const priorityText = {
+                    'high': 'Tinggi',
+                    'medium': 'Sedang',
+                    'low': 'Rendah'
+                };
+                
+                document.getElementById('detailTitle').textContent = event.title;
+                document.getElementById('detailPriority').textContent = priorityText[event.priority];
+                document.getElementById('detailPriority').className = `inline-block px-3 py-1 rounded-full text-xs font-semibold ${priorityColors[event.priority]} mb-2`;
+                
+                const eventDate = new Date(event.date);
+                document.getElementById('detailDateTime').textContent = `${formatDate(eventDate)} â€¢ ${event.time}`;
+                document.getElementById('detailLocation').textContent = event.location;
+                
+                const imgElement = document.querySelector('#detailImage img');
+                imgElement.src = event.image;
+                imgElement.alt = event.title;
+                
+                document.getElementById('detailDescription').textContent = event.description;
+                
+                document.getElementById('eventDetailModal').classList.remove('hidden');
+            }
+            
+            // Close detail modal
+            document.getElementById('closeDetailModal').addEventListener('click', function() {
+                document.getElementById('eventDetailModal').classList.add('hidden');
+            });
+            
+            document.getElementById('closeDetailBtn').addEventListener('click', function() {
+                document.getElementById('eventDetailModal').classList.add('hidden');
+            });
+            
+            document.getElementById('eventDetailModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
         });
     </script>
 </body>
