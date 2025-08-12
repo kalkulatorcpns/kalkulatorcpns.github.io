@@ -193,7 +193,7 @@
                 <div class="p-5">
                     <div class="flex justify-between items-start mb-3">
                         <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Sedang</span>
-                        <span class="text-sm text-gray-500">20 Juni 2023 â€¢ 08:00</span>
+                        <span class="text-sm text-gray-500">20 Juni 2023 • 08:00</span>
                     </div>
                     <h3 class="text-xl font-bold text-gray-800 mb-2">Rapat Koordinasi</h3>
                     <p class="text-gray-600 mb-3 line-clamp-3">Rapat koordinasi internal membahas progres kegiatan terkini dan rencana ke depan.</p>
@@ -211,7 +211,7 @@
         <!-- Empty State -->
         <div id="emptyState" class="hidden text-center py-12">
             <div class="w-24 h-24 mx-auto mb-6">
-                <img src="https://placehold.co/200x200" alt="Empty calendar illustration showing no events scheduled" class="rounded-full">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/e71d2c7e-7770-42f5-ba0b-2d3fb7a36165.png" alt="Empty calendar illustration showing no events scheduled" class="rounded-full">
             </div>
             <h3 class="text-xl font-bold text-gray-700 mb-2">Tidak ada kegiatan</h3>
             <p class="text-gray-500 max-w-md mx-auto">Tidak ada kegiatan yang sesuai dengan filter yang dipilih. Silakan coba dengan kriteria berbeda.</p>
@@ -227,7 +227,7 @@
                     <h2 id="detailTitle" class="text-2xl font-bold text-gray-800 mb-1">Judul Kegiatan</h2>
                     <div class="flex items-center text-gray-600 mb-4">
                         <i class="far fa-calendar-alt mr-2"></i>
-                        <span id="detailDateTime">20 Juni 2023 â€¢ 08:00 - 10:00</span>
+                        <span id="detailDateTime">20 Juni 2023 • 08:00 - 10:00</span>
                     </div>
                 </div>
                 <button id="closeDetailModal" class="text-gray-500 hover:text-gray-700">
@@ -241,7 +241,7 @@
                     <span id="detailLocation">Lokasi Kegiatan</span>
                 </div>
                 <div id="detailImage" class="h-48 w-full bg-gray-200 rounded-lg mb-4 overflow-hidden">
-                    <img src="https://placehold.co/800x400" alt="Sample event image showing meeting room setup" class="w-full h-full object-cover">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/a96f9896-9d44-49c1-836e-36bc30987c8e.png" alt="Sample event image showing meeting room setup" class="w-full h-full object-cover">
                 </div>
                 <p id="detailDescription" class="text-gray-700">
                     Deskripsi lengkap kegiatan akan ditampilkan di sini. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget aliquam ultricies, nunc nisl aliquet nunc, quis aliquam nisl nunc eu nisl.
@@ -279,10 +279,26 @@
         </div>
     </footer>
 
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeG0cY_skRFjJigW0d3mkdXswCUxY8o-c",
+            authDomain: "agenda-bappeda-benteng.firebaseapp.com",
+            projectId: "agenda-bappeda-benteng",
+            storageBucket: "agenda-bappeda-benteng.firebasestorage.app",
+            messagingSenderId: "515552570595",
+            appId: "1:515552570595:web:37bf1820b66030a49969d6"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
         // Database Initialization
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize IndexedDB
+            // Initialize IndexedDB for offline support
             const dbName = 'LeaderAgendaDB';
             const dbVersion = 1;
             let db;
@@ -365,7 +381,7 @@
                                 location: 'Ruang Rapat Utama',
                                 description: 'Rapat koordinasi bulanan seluruh departemen untuk membahas progres dan tantangan terkini.',
                                 priority: 'high',
-                                image: 'https://placehold.co/800x400?text=Rapat+Koordinasi'
+                                image: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/48615893-0d94-476a-91e1-b69aaf0fd093.png'
                             },
                             {
                                 title: 'Kunjungan Kerja ke Cabang Regional',
@@ -374,7 +390,7 @@
                                 location: 'Kantor Cabang Regional',
                                 description: 'Kunjungan kerja rutin ke cabang regional untuk memantau perkembangan bisnis di daerah.',
                                 priority: 'medium',
-                                image: 'https://placehold.co/800x400?text=Kunjungan+Kerja'
+                                image: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/7e7021a5-caa3-4fd5-9ef0-69a27c8bb731.png'
                             },
                             {
                                 title: 'Presentasi Proyek Baru',
@@ -383,7 +399,7 @@
                                 location: 'Ruang Meeting lantai 10',
                                 description: 'Presentasi proposal proyek baru kepada stakeholder utama untuk mendapatkan persetujuan.',
                                 priority: 'medium',
-                                image: 'https://placehold.co/800x400?text=Presentasi+Proyek'
+                                image: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/4412171c-f446-4c07-9894-6468b05996f7.png'
                             },
                             {
                                 title: 'Pelatihan Kepemimpinan',
@@ -392,31 +408,67 @@
                                 location: 'Ballroom Hotel Grand Mercure',
                                 description: 'Pelatihan kepemimpinan untuk seluruh manajer level menengah dengan pembicara ahli dari konsultan ternama.',
                                 priority: 'low',
-                                image: 'https://placehold.co/800x400?text=Pelatihan+Kepemimpinan'
+                                image: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1e3a08fc-fee2-4fa5-b497-6cd6ca521c9d.png'
                             }
                         ];
                         
-                        const transaction = db.transaction(['events'], 'readwrite');
-                        const store = transaction.objectStore('events');
-                        
+                        const batch = db.batch();
                         sampleEvents.forEach(event => {
-                            store.add(event);
+                            const docRef = db.collection("events").doc();
+                            batch.set(docRef, event);
                         });
                         
-                        transaction.oncomplete = function() {
-                            console.log('Sample data added successfully');
-                            loadEvents();
-                        };
+                        batch.commit().then(() => {
+                            console.log('Sample data added successfully to Firestore');
+                            syncFromFirestore();
+                        });
                     }
                 };
             }
             
+            // Add sync functions
+            function syncFromFirestore() {
+                db.collection("events").orderBy("date", "desc").get().then((querySnapshot) => {
+                    const transaction = window.idb.transaction(['events'], 'readwrite');
+                    const store = transaction.objectStore('events');
+                    
+                    // Clear local data first
+                    store.clear();
+                    
+                    // Add Firestore data to IndexedDB
+                    querySnapshot.forEach((doc) => {
+                        store.add(doc.data());
+                    });
+                    
+                    transaction.oncomplete = function() {
+                        console.log("Synced data from Firestore");
+                        loadEvents();
+                    };
+                });
+            }
+            
+            // Sync local changes to Firestore
+            function syncToFirestore(event, id = null) {
+                if (id) {
+                    db.collection("events").doc(id.toString()).update(event);
+                } else {
+                    db.collection("events").add(event);
+                }
+            }
+            
             // Load events from database
             function loadEvents(searchTerm = '', priorityFilter = 'all', dateFilter = 'all') {
-                const transaction = db.transaction(['events'], 'readonly');
+                // Always check if online first
+                if (navigator.onLine) {
+                    syncFromFirestore();
+                    return;
+                }
+                
+                // Offline fallback
+                const transaction = window.idb.transaction(['events'], 'readonly');
                 const store = transaction.objectStore('events');
                 const index = store.index('date');
-                const request = index.openCursor(null, 'prev'); // Descending order to get newest first
+                const request = index.openCursor(null, 'prev');
                 
                 const eventsContainer = document.getElementById('eventsContainer');
                 eventsContainer.innerHTML = '';
@@ -509,7 +561,7 @@
                                 ${priorityText[event.priority]}
                             </span>
                             <span class="text-sm text-gray-500">
-                                ${formatDate(eventDate)} â€¢ ${event.time}
+                                ${formatDate(eventDate)} • ${event.time}
                                 ${isPastEvent ? '<span class="text-red-500 ml-1">(Lewat)</span>' : ''}
                             </span>
                         </div>
@@ -545,7 +597,7 @@
             // Format date with time
             function formatDateTime(date, time) {
                 const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-                return `${date.toLocaleDateString('id-ID', options)} â€¢ ${time}`;
+                return `${date.toLocaleDateString('id-ID', options)} • ${time}`;
             }
             
             // Event Listeners
@@ -611,7 +663,7 @@
                 const location = document.getElementById('eventLocation').value;
                 const description = document.getElementById('eventDescription').value;
                 const priority = document.getElementById('eventPriority').value;
-                const image = document.getElementById('eventImage').value || 'https://placehold.co/800x400?text=Event+Image';
+                const image = document.getElementById('eventImage').value || 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/dfecb1bd-1b51-41cb-9d85-a249c3795401.png';
                 
                 const eventDate = new Date(date);
                 eventDate.setHours(0, 0, 0, 0);
@@ -684,7 +736,7 @@
                                 </div>
                                 <div class="flex items-center text-sm text-gray-500 mb-1">
                                     <i class="far fa-calendar ${priorityColors[event.priority]} mr-1"></i>
-                                    <span>${formatDate(eventDate)} â€¢ ${event.time}</span>
+                                    <span>${formatDate(eventDate)} • ${event.time}</span>
                                     ${isPastEvent ? '<span class="text-red-500 ml-2">(Lewat)</span>' : ''}
                                 </div>
                                 <div class="flex items-center text-sm text-gray-500">
@@ -802,7 +854,7 @@
                 document.getElementById('detailPriority').className = `inline-block px-3 py-1 rounded-full text-xs font-semibold ${priorityColors[event.priority]} mb-2`;
                 
                 const eventDate = new Date(event.date);
-                document.getElementById('detailDateTime').textContent = `${formatDate(eventDate)} â€¢ ${event.time}`;
+                document.getElementById('detailDateTime').textContent = `${formatDate(eventDate)} • ${event.time}`;
                 document.getElementById('detailLocation').textContent = event.location;
                 
                 const imgElement = document.querySelector('#detailImage img');
